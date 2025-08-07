@@ -1,4 +1,4 @@
-import tkinter as tk
+import customtkinter as ctk
 from tkinter import messagebox
 from graph import Grafo
 import networkx as nx
@@ -7,30 +7,49 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class Interface:
     def __init__(self, master):
+        ctk.set_appearance_mode("System")
+        ctk.set_default_color_theme("blue")
+
         self.master = master
         self.master.title("Árvore Geradora Mínima (Prim)")
+        self.master.geometry("800x600")
+        self.master.grid_rowconfigure(1, weight=1)
+        self.master.grid_columnconfigure(0, weight=1)
+
         self.grafo = Grafo()
 
-        # Inputs
-        tk.Label(master, text="Vértice 1").grid(row=0, column=0)
-        tk.Label(master, text="Vértice 2").grid(row=0, column=1)
-        tk.Label(master, text="Peso").grid(row=0, column=2)
+        # Frame de entrada
+        self.frame_topo = ctk.CTkFrame(master)
+        self.frame_topo.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
 
-        self.v1_entry = tk.Entry(master)
-        self.v2_entry = tk.Entry(master)
-        self.peso_entry = tk.Entry(master)
+        self.v1_entry = ctk.CTkEntry(self.frame_topo, placeholder_text="Vértice 1")
+        self.v2_entry = ctk.CTkEntry(self.frame_topo, placeholder_text="Vértice 2")
+        self.peso_entry = ctk.CTkEntry(self.frame_topo, placeholder_text="Peso")
 
-        self.v1_entry.grid(row=1, column=0)
-        self.v2_entry.grid(row=1, column=1)
-        self.peso_entry.grid(row=1, column=2)
+        self.v1_entry.grid(row=0, column=0, padx=5, pady=5)
+        self.v2_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.peso_entry.grid(row=0, column=2, padx=5, pady=5)
 
-        tk.Button(master, text="Adicionar Aresta", command=self.adicionar).grid(row=1, column=3)
-        tk.Button(master, text="Executar Prim", command=self.executar_prim).grid(row=2, column=0, columnspan=2)
+        self.botao_adicionar = ctk.CTkButton(self.frame_topo, text="Adicionar Aresta", command=self.adicionar)
+        self.botao_adicionar.grid(row=0, column=3, padx=10)
 
-        # Área do gráfico
+        self.botao_prim = ctk.CTkButton(self.frame_topo, text="Executar Prim", command=self.executar_prim)
+        self.botao_prim.grid(row=0, column=4, padx=10)
+
+        self.botao_limpar = ctk.CTkButton(self.frame_topo, text="Limpar Grafo", command=self.limpar_grafo)
+        self.botao_limpar.grid(row=0, column=5, padx=10)
+
+
+        # Frame do gráfico
+        self.frame_grafo = ctk.CTkFrame(master)
+        self.frame_grafo.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0, 10))
+        self.frame_grafo.grid_rowconfigure(0, weight=1)
+        self.frame_grafo.grid_columnconfigure(0, weight=1)
+
         self.figura = plt.Figure(figsize=(6, 4), dpi=100)
-        self.canvas = FigureCanvasTkAgg(self.figura, master)
-        self.canvas.get_tk_widget().grid(row=3, column=0, columnspan=4)
+        self.canvas = FigureCanvasTkAgg(self.figura, master=self.frame_grafo)
+        self.canvas_widget = self.canvas.get_tk_widget()
+        self.canvas_widget.pack(fill="both", expand=True)
 
     def adicionar(self):
         u = self.v1_entry.get()
@@ -42,9 +61,9 @@ class Interface:
             return
         self.grafo.adicionar_aresta(u, v, peso)
         messagebox.showinfo("Sucesso", f"Aresta {u}-{v} com peso {peso} adicionada")
-        self.v1_entry.delete(0, tk.END)
-        self.v2_entry.delete(0, tk.END)
-        self.peso_entry.delete(0, tk.END)
+        self.v1_entry.delete(0, 'end')
+        self.v2_entry.delete(0, 'end')
+        self.peso_entry.delete(0, 'end')
         self.plotar_grafo()
 
     def executar_prim(self):
@@ -55,6 +74,11 @@ class Interface:
         mst, total = self.grafo.prim(inicio)
         self.plotar_grafo(mst)
         messagebox.showinfo("Resultado", f"Peso total da árvore geradora mínima: {total}")
+
+    def limpar_grafo(self):
+        self.grafo.vertices.clear()
+        self.plotar_grafo()
+        messagebox.showinfo("Limpo", "Grafo apagado com sucesso!")
 
     def plotar_grafo(self, mst=None):
         self.figura.clear()
